@@ -5,23 +5,25 @@ Ecwid.OnAPILoaded.add(function () {
     if (page.type === 'PRODUCT') {
       if (!document.querySelector('#floating-back-btn')) {
         const btn = document.createElement('a');
-        btn.href = '/store'; // Change to your menu/homepage
+        btn.href = '/store'; // Change to your home or menu link
         btn.textContent = '← Back to Menu';
         btn.id = 'floating-back-btn';
 
-        btn.style.position = 'fixed';
-        btn.style.bottom = '20px';
-        btn.style.left = '20px';
-        btn.style.backgroundColor = 'white';
-        btn.style.color = 'black';
-        btn.style.border = '1px solid black';
-        btn.style.padding = '10px 15px';
-        btn.style.fontWeight = 'bold';
-        btn.style.borderRadius = '5px';
-        btn.style.textDecoration = 'none';
-        btn.style.zIndex = '9999';
-        btn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-        btn.style.transition = 'background-color 0.2s ease';
+        Object.assign(btn.style, {
+          position: 'fixed',
+          bottom: '20px',
+          left: '20px',
+          backgroundColor: 'white',
+          color: 'black',
+          border: '1px solid black',
+          padding: '10px 15px',
+          fontWeight: 'bold',
+          borderRadius: '5px',
+          textDecoration: 'none',
+          zIndex: '9999',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+          transition: 'background-color 0.2s ease'
+        });
 
         btn.onmouseover = () => btn.style.backgroundColor = '#f0f0f0';
         btn.onmouseout = () => btn.style.backgroundColor = 'white';
@@ -31,7 +33,8 @@ Ecwid.OnAPILoaded.add(function () {
     }
   });
 
-  // --- SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
+  /*
+  // --- [TEMPORARILY DISABLED] SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
   Ecwid.OnPageLoaded.add(function (page) {
     if (page.type === 'CHECKOUT') {
       const now = new Date();
@@ -97,5 +100,6 @@ Ecwid.OnAPILoaded.add(function () {
       }
     }
   });
+  */
 
 });
