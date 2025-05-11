@@ -3,7 +3,7 @@ Ecwid.OnPageLoaded.add(function (page) {
   if (page.type === 'PRODUCT') {
     if (!document.querySelector('#floating-back-btn')) {
       const btn = document.createElement('a');
-      btn.href = '/store'; // Change this to '/' if your homepage
+      btn.href = '/store'; // Change this to your home or menu link
       btn.textContent = '← Back to Menu';
       btn.id = 'floating-back-btn';
 
@@ -29,7 +29,7 @@ Ecwid.OnPageLoaded.add(function (page) {
   }
 });
 
-// --- ORDER CUTOFF LOGIC FOR DELIVERY & PICKUP ---
+// --- SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
 Ecwid.OnPageLoaded.add(function (page) {
   if (page.type === 'CHECKOUT') {
     const now = new Date();
@@ -37,33 +37,48 @@ Ecwid.OnPageLoaded.add(function (page) {
 
     if (currentHour >= 12) {
       setTimeout(() => {
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const yyyy = tomorrow.getFullYear();
-        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
-        const dd = String(tomorrow.getDate()).padStart(2, '0');
-        const tomorrowStr = `${yyyy}-${mm}-${dd}`;
-
-        const removeTomorrowOption = (selector) => {
-          const select = document.querySelector(selector);
-          if (select) {
-            const options = select.querySelectorAll('option');
-            options.forEach((option) => {
-              if (option.value === tomorrowStr) {
-                option.remove();
-              }
-            });
-          }
+        const maxLookaheadDays = 7;
+        const formatDate = (d) => {
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
         };
 
-        removeTomorrowOption('select[name*="deliveryDate"]');
-        removeTomorrowOption('select[name*="pickupDate"]');
+        const removeNextAvailable = (selector) => {
+          const select = document.querySelector(selector);
+          if (!select) return;
+
+          const options = Array.from(select.querySelectorAll('option'));
+          let removedDate = null;
+
+          for (let i = 1; i <= maxLookaheadDays; i++) {
+            const candidateDate = new Date();
+            candidateDate.setDate(candidateDate.getDate() + i);
+            const candidateStr = formatDate(candidateDate);
+
+            const match = options.find(opt => opt.value === candidateStr);
+            if (match) {
+              match.remove(); // Remove the first valid date
+              removedDate = candidateStr;
+              break;
+            }
+          }
+
+          return removedDate;
+        };
+
+        const removedPickup = removeNextAvailable('select[name*="pickupDate"]');
+        const removedDelivery = removeNextAvailable('select[name*="deliveryDate"]');
 
         const notice = document.createElement('div');
         notice.innerHTML = `
-          <strong style="color: red;">Heads up!</strong> Orders must be placed by <strong>12:00 PM</strong> 
-          to qualify for <strong>next-day pickup or delivery</strong>. Since it’s after noon, the earliest available 
-          time is the following day.
+          <strong style="color: red;">Heads up!</strong> Orders placed after <strong>12:00 PM</strong> 
+          cannot be scheduled for the next day. ${
+            removedPickup || removedDelivery
+              ? `The earliest available option has been adjusted to reflect our schedule.`
+              : ``
+          }
         `;
         notice.style.backgroundColor = '#fff5f5';
         notice.style.border = '1px solid #ffcccc';
