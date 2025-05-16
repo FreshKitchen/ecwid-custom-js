@@ -116,6 +116,4 @@ Ecwid.OnAPILoaded.add(function () {
       }
     }
   });
-  */
-
 });
