@@ -1,26 +1,28 @@
 Ecwid.OnAPILoaded.add(function () {
+  console.log("Fresh Kitchen custom JS loaded");
 
-  // --- FLOATING BACK TO MENU BUTTON ---
   Ecwid.OnPageLoaded.add(function (page) {
+    console.log("Page type:", page.type);
+
     if (page.type === 'PRODUCT') {
+      console.log("Product page detected, injecting 'Back to Menu' button...");
+
       if (!document.querySelector('#floating-back-btn')) {
         const btn = document.createElement('a');
-        btn.href = '/store'; // Change to your home or menu link
+        btn.href = 'https://www.yourfreshkitchen.com/products/FULL-MENU-c177145888';
         btn.textContent = '← Back to Menu';
         btn.id = 'floating-back-btn';
 
         Object.assign(btn.style, {
-          position: 'fixed',
-          bottom: '20px',
-          left: '20px',
+          display: 'inline-block',
+          marginTop: '15px',
+          padding: '10px 15px',
           backgroundColor: 'white',
           color: 'black',
           border: '1px solid black',
-          padding: '10px 15px',
           fontWeight: 'bold',
           borderRadius: '5px',
           textDecoration: 'none',
-          zIndex: '9999',
           boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
           transition: 'background-color 0.2s ease'
         });
@@ -28,10 +30,24 @@ Ecwid.OnAPILoaded.add(function () {
         btn.onmouseover = () => btn.style.backgroundColor = '#f0f0f0';
         btn.onmouseout = () => btn.style.backgroundColor = 'white';
 
-        document.body.appendChild(btn);
+        const checkoutBtn = document.querySelector('.details-product-purchase__checkout-button');
+        if (checkoutBtn && checkoutBtn.parentNode) {
+          checkoutBtn.parentNode.appendChild(btn);
+          console.log("Button injected successfully.");
+        } else {
+          console.warn("Could not find checkout button container.");
+        }
       }
     }
+
+    /*
+    if (page.type === 'CHECKOUT') {
+      console.log("Checkout page loaded - Order cutoff logic here.");
+    }
+    */
   });
+});
+
 
   /*
   // --- [TEMPORARILY DISABLED] SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
