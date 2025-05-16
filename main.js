@@ -48,8 +48,7 @@ Ecwid.OnAPILoaded.add(function () {
   });
 });
 
-
-  /*
+/*
   // --- [TEMPORARILY DISABLED] SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
   Ecwid.OnPageLoaded.add(function (page) {
     if (page.type === 'CHECKOUT') {
@@ -116,4 +115,4 @@ Ecwid.OnAPILoaded.add(function () {
       }
     }
   });
-});
+*/
