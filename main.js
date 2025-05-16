@@ -30,9 +30,9 @@ Ecwid.OnAPILoaded.add(function () {
         btn.onmouseover = () => btn.style.backgroundColor = '#f0f0f0';
         btn.onmouseout = () => btn.style.backgroundColor = 'white';
 
-        const checkoutBtn = document.querySelector('.details-product-purchase__checkout-button');
-        if (checkoutBtn && checkoutBtn.parentNode) {
-          checkoutBtn.parentNode.appendChild(btn);
+        const purchaseBlock = document.querySelector('.details-product-purchase');
+        if (purchaseBlock) {
+          purchaseBlock.appendChild(btn);
           console.log("Button injected successfully.");
         } else {
           console.warn("Could not find checkout button container.");
