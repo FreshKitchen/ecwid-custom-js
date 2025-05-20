@@ -1,62 +1,27 @@
-// --- DEBUGGING: SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
 Ecwid.OnPageLoaded.add(function (page) {
   if (page.type && page.type.startsWith('CHECKOUT')) {
     console.log("✅ Cutoff logic page match:", page.type);
 
     const now = new Date();
-    const currentHour = 13; // 🔧 FORCED to simulate post-12PM
+    const currentHour = 13; // FORCE for testing
 
     if (currentHour >= 12) {
       console.log("🕛 Cutoff logic executing due to currentHour =", currentHour);
 
       setTimeout(() => {
-        const maxLookaheadDays = 7;
+        const pickupField = document.querySelector('input[id^="Pikaday-pickup-date"]');
 
-        const formatDate = (d) => {
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const dd = String(d.getDate()).padStart(2, '0');
-          return `${yyyy}-${mm}-${dd}`;
-        };
+        if (!pickupField) {
+          console.warn("⚠️ Could not find pickup date input field.");
+          return;
+        }
 
-        const removeNextAvailable = (selector) => {
-          const select = document.querySelector(selector);
-          if (!select) {
-            console.warn(`⚠️ Selector not found: ${selector}`);
-            return null;
-          }
-
-          const options = Array.from(select.querySelectorAll('option'));
-          let removedDate = null;
-
-          for (let i = 1; i <= maxLookaheadDays; i++) {
-            const candidateDate = new Date();
-            candidateDate.setDate(candidateDate.getDate() + i);
-            const candidateStr = formatDate(candidateDate);
-
-            const match = options.find(opt => opt.value === candidateStr);
-            if (match) {
-              match.remove();
-              removedDate = candidateStr;
-              console.log(`🗑️ Removed date from ${selector}:`, removedDate);
-              break;
-            }
-          }
-
-          return removedDate;
-        };
-
-        const removedPickup = removeNextAvailable('select[name*="pickupDate"]');
-        const removedDelivery = removeNextAvailable('select[name*="deliveryDate"]');
+        console.log("📅 Found pickup date field:", pickupField.id);
 
         const notice = document.createElement('div');
         notice.innerHTML = `
           <strong style="color: red;">Heads up!</strong> Orders placed after <strong>12:00 PM</strong> 
-          cannot be scheduled for the next day. ${
-            removedPickup || removedDelivery
-              ? `The earliest available option has been adjusted to reflect our schedule.`
-              : ``
-          }
+          cannot be scheduled for the next day. The earliest available pickup time has been adjusted.
         `;
         notice.style.backgroundColor = '#fff5f5';
         notice.style.border = '1px solid #ffcccc';
@@ -65,14 +30,15 @@ Ecwid.OnPageLoaded.add(function (page) {
         notice.style.fontSize = '14px';
         notice.style.borderRadius = '5px';
 
-        const form = document.querySelector('.ecwid-PickupDeliveryForm');
-        if (form) {
-          form.prepend(notice);
-          console.log("📌 Notice injected into pickup/delivery form.");
+        // Insert just before the field, or into its container
+        const wrapper = pickupField.closest('.form-control');
+        if (wrapper) {
+          wrapper.parentNode.insertBefore(notice, wrapper);
+          console.log("📌 Notice injected above the date picker.");
         } else {
-          console.warn("⚠️ Could not find .ecwid-PickupDeliveryForm to inject notice.");
+          console.warn("⚠️ Could not find container to inject warning.");
         }
-      }, 1000); // Give Ecwid time to finish rendering
+      }, 1000);
     }
   }
 });
