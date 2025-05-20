@@ -40,17 +40,10 @@ Ecwid.OnAPILoaded.add(function () {
       }
     }
 
-    /*
-    if (page.type === 'CHECKOUT') {
-      console.log("Checkout page loaded - Order cutoff logic here.");
-    }
-    */
-  });
-});
+    // --- SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
+    if (page.type && page.type.startsWith('CHECKOUT')) {
+      console.log("Cutoff logic triggered on:", page.type);
 
-SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
-  Ecwid.OnPageLoaded.add(function (page) {
-    if (page.type === 'CHECKOUT') {
       const now = new Date();
       const currentHour = now.getHours();
 
@@ -80,6 +73,7 @@ SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
               if (match) {
                 match.remove();
                 removedDate = candidateStr;
+                console.log("Removed date from", selector, ":", removedDate);
                 break;
               }
             }
@@ -114,4 +108,4 @@ SMART ORDER CUTOFF LOGIC WITH SKIP-DAY SUPPORT ---
       }
     }
   });
-*/
+});
