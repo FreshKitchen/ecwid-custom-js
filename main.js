@@ -46,15 +46,14 @@ Ecwid.OnAPILoaded.add(function () {
       const currentHour = now.getHours();
       console.log("Cutoff logic executing due to currentHour =", currentHour);
 
-      // Enforce cutoff at 12PM
       if (currentHour >= 12) {
         const calendarInput = document.querySelector('input.form-control__text[readonly]');
         if (!calendarInput) {
-          console.warn("❌ Could not find the calendar input field.");
+          console.warn("⛔ Could not find the calendar input field.");
           return;
         }
 
-        // Display warning
+        // Show cutoff warning
         const notice = document.createElement('div');
         notice.innerHTML = `
           <strong style="color: red;">Heads up!</strong> Orders placed after <strong>12:00 PM</strong> 
@@ -74,45 +73,34 @@ Ecwid.OnAPILoaded.add(function () {
           formBlock.prepend(notice);
         }
 
+        // Trigger calendar render
         calendarInput.click();
 
         const interval = setInterval(() => {
-          const activeDates = [...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')];
+          const activeDates = [
+            ...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')
+          ];
+
           if (activeDates.length >= 2) {
             const firstDate = activeDates[0];
-            firstDate.classList.add('is-disabled');
-            firstDate.setAttribute('aria-disabled', 'true');
-            firstDate.style.pointerEvents = 'none';
-            firstDate.style.opacity = '0.5';
-            console.log("✅ First active date disabled due to cutoff.");
+            if (firstDate) {
+              firstDate.classList.add('is-disabled');
+              firstDate.setAttribute('aria-disabled', 'true');
+              firstDate.style.pointerEvents = 'none';
+              firstDate.style.opacity = '0.5';
+              console.log("✅ First active date disabled due to cutoff.");
+            } else {
+              console.warn("⚠️ No valid firstDate found to disable.");
+            }
             clearInterval(interval);
           } else {
             console.log("⏳ Waiting for calendar to render at least 2 selectable days...");
           }
         }, 300);
 
+        // Failsafe timeout
         setTimeout(() => clearInterval(interval), 5000);
       }
-
-      // --- GOOGLE PAY VALIDATION BLOCKER ---
-      const validateDateBeforePayment = () => {
-        const dateInput = document.querySelector('input.form-control__text[readonly]');
-        return dateInput && dateInput.value.trim();
-      };
-
-      const blockPaymentIfNoDate = (btn) => {
-        btn.addEventListener('click', function (e) {
-          if (!validateDateBeforePayment()) {
-            e.preventDefault();
-            alert("❌ Please choose a pickup date before continuing.");
-          }
-        });
-      };
-
-      setTimeout(() => {
-        const gpayButtons = document.querySelectorAll('button[data-pay]');
-        gpayButtons.forEach(blockPaymentIfNoDate);
-      }, 1000);
     }
   });
 });
