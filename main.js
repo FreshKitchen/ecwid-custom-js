@@ -40,20 +40,21 @@ Ecwid.OnAPILoaded.add(function () {
       }
     }
 
-    // --- SMART ORDER CUTOFF LOGIC WITH DOM WATCHING ---
+    // --- CUTOFF LOGIC ON CHECKOUT DELIVERY PAGE ---
     if (page.type === 'CHECKOUT_DELIVERY') {
-      const applyCutoffLogic = () => {
-        const now = new Date();
-        const currentHour = now.getHours();
-        console.log("Cutoff logic executing due to currentHour =", currentHour);
-        if (currentHour < 12) return;
+      const now = new Date();
+      const currentHour = now.getHours();
+      console.log("Cutoff logic executing due to currentHour =", currentHour);
 
+      if (currentHour >= 12) {
         const calendarInput = document.querySelector('input.form-control__text[readonly]');
-        if (!calendarInput || document.querySelector('#cutoff-notice')) return;
+        if (!calendarInput) {
+          console.warn("⛔ Could not find the calendar input field.");
+          return;
+        }
 
-        // Inject cutoff warning
+        // Show cutoff warning
         const notice = document.createElement('div');
-        notice.id = 'cutoff-notice';
         notice.innerHTML = `
           <strong style="color: red;">Heads up!</strong> Orders placed after <strong>12:00 PM</strong> 
           cannot be scheduled for the next day. The earliest available pickup time has been adjusted.
@@ -68,35 +69,38 @@ Ecwid.OnAPILoaded.add(function () {
         });
 
         const formBlock = calendarInput.closest('.ec-form');
-        if (formBlock) formBlock.prepend(notice);
+        if (formBlock) {
+          formBlock.prepend(notice);
+        }
 
-        // Trigger calendar open and disable first active day
+        // Trigger calendar render
         calendarInput.click();
 
         const interval = setInterval(() => {
-          const activeDates = [...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')];
+          const activeDates = [
+            ...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')
+          ];
+
           if (activeDates.length >= 2) {
             const firstDate = activeDates[0];
-            firstDate.classList.add('is-disabled');
-            firstDate.setAttribute('aria-disabled', 'true');
-            firstDate.style.pointerEvents = 'none';
-            firstDate.style.opacity = '0.5';
-            console.log("✅ First active date disabled due to cutoff.");
+            if (firstDate) {
+              firstDate.classList.add('is-disabled');
+              firstDate.setAttribute('aria-disabled', 'true');
+              firstDate.style.pointerEvents = 'none';
+              firstDate.style.opacity = '0.5';
+              console.log("✅ First active date disabled due to cutoff.");
+            } else {
+              console.warn("⚠️ No valid firstDate found to disable.");
+            }
             clearInterval(interval);
           } else {
             console.log("⏳ Waiting for calendar to render at least 2 selectable days...");
           }
         }, 300);
 
+        // Failsafe timeout
         setTimeout(() => clearInterval(interval), 5000);
-      };
-
-      // Run initially
-      applyCutoffLogic();
-
-      // Re-run if checkout DOM changes (e.g. coupon code applied)
-      const observer = new MutationObserver(() => applyCutoffLogic());
-      observer.observe(document.body, { childList: true, subtree: true });
+      }
     }
   });
 });
