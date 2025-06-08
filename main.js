@@ -71,18 +71,19 @@
             });
 
             const formBlock = calendarInput.closest('.ec-form');
-            if (formBlock) {
+            if (formBlock && !formBlock.querySelector('.cutoff-warning')) {
+              notice.classList.add('cutoff-warning');
               formBlock.prepend(notice);
             }
+
+            // Clear the default date value
+            calendarInput.value = '';
 
             // Trigger calendar render
             calendarInput.click();
 
             const interval = setInterval(() => {
-              const activeDates = [
-                ...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')
-              ];
-
+              const activeDates = [...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')];
               if (activeDates.length >= 2) {
                 const firstDate = activeDates[0];
                 if (firstDate) {
@@ -91,8 +92,6 @@
                   firstDate.style.pointerEvents = 'none';
                   firstDate.style.opacity = '0.5';
                   console.log("✅ First active date disabled due to cutoff.");
-                } else {
-                  console.warn("⚠️ No valid firstDate found to disable.");
                 }
                 clearInterval(interval);
               } else {
@@ -100,7 +99,6 @@
               }
             }, 300);
 
-            // Failsafe timeout
             setTimeout(() => clearInterval(interval), 5000);
           }
         }
@@ -111,4 +109,3 @@
     setTimeout(waitForEcwid, 200);
   }
 })();
-
