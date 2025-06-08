@@ -4,9 +4,8 @@ Ecwid.OnAPILoaded.add(function () {
   Ecwid.OnPageLoaded.add(function (page) {
     console.log("Page type:", page.type);
 
-    // --- BACK TO MENU BUTTON ON PRODUCT PAGE ---
+    // === BACK TO MENU BUTTON ===
     if (page.type === 'PRODUCT') {
-      console.log("Injecting Back to Menu button...");
       if (!document.querySelector('#floating-back-btn')) {
         const btn = document.createElement('a');
         btn.href = 'https://www.yourfreshkitchen.com/products/FULL-MENU-c177145888';
@@ -40,7 +39,7 @@ Ecwid.OnAPILoaded.add(function () {
       }
     }
 
-    // --- CUTOFF LOGIC ON CHECKOUT DELIVERY PAGE ---
+    // === CUTOFF DATE PICKER LOGIC ===
     if (page.type === 'CHECKOUT_DELIVERY') {
       const now = new Date();
       const currentHour = now.getHours();
@@ -69,38 +68,33 @@ Ecwid.OnAPILoaded.add(function () {
         });
 
         const formBlock = calendarInput.closest('.ec-form');
-        if (formBlock) {
+        if (formBlock && !formBlock.querySelector('.cutoff-warning')) {
+          notice.classList.add('cutoff-warning');
           formBlock.prepend(notice);
         }
 
-        // Clear pre-selected date to force user to manually select
+        // Clear the default value (prevents auto-selecting the now-invalid first date)
         calendarInput.value = '';
-        calendarInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Trigger calendar render
         calendarInput.click();
 
         const interval = setInterval(() => {
-          const activeDates = [
-            ...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')
-          ];
-
+          const activeDates = [...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')];
           if (activeDates.length >= 2) {
             const firstDate = activeDates[0];
-            if (firstDate) {
-              firstDate.classList.add('is-disabled');
-              firstDate.setAttribute('aria-disabled', 'true');
-              firstDate.style.pointerEvents = 'none';
-              firstDate.style.opacity = '0.5';
-              console.log("✅ First active date disabled due to cutoff.");
-            } else {
-              console.warn("⚠️ No valid firstDate found to disable.");
-            }
+            firstDate.classList.add('is-disabled');
+            firstDate.setAttribute('aria-disabled', 'true');
+            firstDate.style.pointerEvents = 'none';
+            firstDate.style.opacity = '0.5';
+            console.log("✅ First active date disabled due to cutoff.");
             clearInterval(interval);
           } else {
             console.log("⏳ Waiting for calendar to render at least 2 selectable days...");
           }
         }, 300);
 
-        // Failsafe timeout
+        // Safety timeout
         setTimeout(() => clearInterval(interval), 5000);
       }
     }
