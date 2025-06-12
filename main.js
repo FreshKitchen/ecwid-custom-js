@@ -48,60 +48,72 @@
           const currentHour = now.getHours();
           console.log("Cutoff logic executing due to currentHour =", currentHour);
 
-          if (currentHour >= 12) {
-            const calendarInput = document.querySelector('input.form-control__text[readonly]');
-            if (!calendarInput) {
-              console.warn("⛔ Could not find the calendar input field.");
-              return;
-            }
-
-            // Show cutoff warning
-            const notice = document.createElement('div');
-            notice.innerHTML = `
-              <strong style="color: red;">Heads up!</strong> Orders placed after <strong>12:00 PM</strong> 
-              cannot be scheduled for the next day. The earliest available pickup time has been adjusted.
-            `;
-            Object.assign(notice.style, {
-              backgroundColor: '#fff5f5',
-              border: '1px solid #ffcccc',
-              padding: '10px',
-              marginBottom: '15px',
-              fontSize: '14px',
-              borderRadius: '5px'
-            });
-
-            const formBlock = calendarInput.closest('.ec-form');
-            if (formBlock && !formBlock.querySelector('.cutoff-warning')) {
-              notice.classList.add('cutoff-warning');
-              formBlock.prepend(notice);
-            }
-
-            // Clear the default date value
-            calendarInput.value = '';
-            calendarInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-            // Trigger calendar render
-            calendarInput.click();
-
-            const interval = setInterval(() => {
-              const activeDates = [...document.querySelectorAll('.pika-single td.pika-day:not(.is-disabled):not(.is-empty)')];
-              if (activeDates.length >= 2) {
-                const firstDate = activeDates[0];
-                if (firstDate) {
-                  firstDate.classList.add('is-disabled');
-                  firstDate.setAttribute('aria-disabled', 'true');
-                  firstDate.style.pointerEvents = 'none';
-                  firstDate.style.opacity = '0.5';
-                  console.log("✅ First active date disabled due to cutoff.");
-                }
-                clearInterval(interval);
-              } else {
-                console.log("⏳ Waiting for calendar to render at least 2 selectable days...");
-              }
-            }, 300);
-
-            setTimeout(() => clearInterval(interval), 5000);
+          const calendarInput = document.querySelector('input.form-control__text[readonly]');
+          if (!calendarInput) {
+            console.warn("⛔ Could not find the calendar input field.");
+            return;
           }
+
+          // Show cutoff warning
+          const notice = document.createElement('div');
+          notice.innerHTML = `
+            <strong style="color: red;">Heads up!</strong> Orders placed after <strong>12:00 PM</strong> 
+            cannot be scheduled for the next day. The earliest available pickup time has been adjusted.
+          `;
+          Object.assign(notice.style, {
+            backgroundColor: '#fff5f5',
+            border: '1px solid #ffcccc',
+            padding: '10px',
+            marginBottom: '15px',
+            fontSize: '14px',
+            borderRadius: '5px'
+          });
+
+          const formBlock = calendarInput.closest('.ec-form');
+          if (formBlock && !formBlock.querySelector('.cutoff-warning')) {
+            notice.classList.add('cutoff-warning');
+            formBlock.prepend(notice);
+          }
+
+          // Clear the default date
+          calendarInput.value = '';
+          calendarInput.click();
+
+          const deliveryDays = [1, 3, 5]; // example: Mon, Wed, Fri
+          const interval = setInterval(() => {
+            const today = new Date();
+            const currentHour = today.getHours();
+            let minValidDate = new Date(today);
+            if (currentHour >= 12) minValidDate.setDate(today.getDate() + 1);
+
+            let validFound = 0;
+            const candidates = [...document.querySelectorAll('.pika-single td.pika-day:not(.is-empty)')];
+            for (const td of candidates) {
+              const dayText = td.textContent.trim();
+              const cal = document.querySelector('.pika-single .pika-title select');
+              if (!dayText || !cal) continue;
+              const visibleMonth = parseInt(cal.value); // 0-based
+              const visibleYear = parseInt(document.querySelector('.pika-single .pika-label-year').textContent);
+              const date = new Date(visibleYear, visibleMonth, parseInt(dayText));
+              if (date < minValidDate) {
+                td.classList.add('is-disabled');
+                td.setAttribute('aria-disabled', 'true');
+                td.style.pointerEvents = 'none';
+                td.style.opacity = '0.5';
+              } else {
+                validFound++;
+              }
+            }
+
+            if (validFound >= 1) {
+              clearInterval(interval);
+              console.log("✅ Past-date blocking complete.");
+            } else {
+              console.log("⏳ Waiting for calendar to stabilize...");
+            }
+          }, 300);
+
+          setTimeout(() => clearInterval(interval), 5000);
         }
       });
     });
