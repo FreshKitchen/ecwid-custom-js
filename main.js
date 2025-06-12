@@ -78,6 +78,7 @@
 
             // Clear the default date value
             calendarInput.value = '';
+            calendarInput.dispatchEvent(new Event('input', { bubbles: true }));
 
             // Trigger calendar render
             calendarInput.click();
